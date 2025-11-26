@@ -8,6 +8,7 @@ import (
 	"gomem/pod"
 	"gomem/process"
 	"gomem/process_blob"
+	"gomem/search"
 )
 
 // FlagData matches the C++ struct
@@ -92,6 +93,39 @@ func main() {
 		if state.OtherFlagPtr != nil {
 			fmt.Printf("\nOtherFlagPtr:\n")
 			pod.PrintPodStruct(dump, *state.OtherFlagPtr, os.Stdout)
+		}
+
+		// Verify Search and ReadPath
+		fmt.Println("\n--- Search Verification ---")
+
+		// Search for the float value 3.14 (CaptureTheFlag value)
+		targetVal := float32(3.14)
+		fmt.Printf("Searching for float32 value: %f\n", targetVal)
+
+		results, err := search.Search(dump, match,
+			search.WithMaxDepth(2),
+			search.WithMaxStructSize(256),
+			search.WithSearchForType(targetVal),
+		)
+		if err != nil {
+			fmt.Printf("Search error: %v\n", err)
+		} else {
+			fmt.Printf("Found %d paths to value:\n", len(results))
+			for i, res := range results {
+				formatPath := fmt.Sprintf("BaseAddress 0x%x", match)
+				for _, offset := range res.Path {
+					formatPath += fmt.Sprintf(" + 0x%x", offset)
+				}
+				fmt.Printf("Path %d: %v\n", i, formatPath)
+
+				// Verify with ReadPath
+				val, err := process.ReadPath[float32](dump, match, res.Path...)
+				if err != nil {
+					fmt.Printf("  ReadPath failed: %v\n", err)
+				} else {
+					fmt.Printf("  ReadPath verified value: %f\n", val)
+				}
+			}
 		}
 	}
 }
