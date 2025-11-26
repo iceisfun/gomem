@@ -307,8 +307,66 @@ func (p *ProcessDump) ReadPointerChainDebug(base process.ProcessMemoryAddress, s
 }
 
 // MemoryScanner methods
+// Scan searches for the given pattern in the process memory
 func (p *ProcessDump) Scan(aob process.AOB) ([]process.ProcessMemoryAddress, error) {
-	return nil, fmt.Errorf("Scan not implemented")
+	var results []process.ProcessMemoryAddress
+
+	// Validate the AOB
+	if len(aob.Pattern) == 0 {
+		return nil, fmt.Errorf("empty pattern")
+	}
+
+	// If no mask is provided, create a mask of all 0xFF (exact match)
+	if len(aob.Mask) == 0 {
+		aob.Mask = make([]byte, len(aob.Pattern))
+		for i := range aob.Mask {
+			aob.Mask[i] = 0xFF
+		}
+	} else if len(aob.Mask) != len(aob.Pattern) {
+		return nil, fmt.Errorf("mask length (%d) doesn't match pattern length (%d)",
+			len(aob.Mask), len(aob.Pattern))
+	}
+
+	// Scan each blob
+	for addr, data := range p.Blobs {
+		matches := findPatternMatches(data, aob.Pattern, aob.Mask)
+		for _, offset := range matches {
+			results = append(results, process.ProcessMemoryAddress(addr+uint64(offset)))
+		}
+	}
+
+	// Sort results
+	sort.Slice(results, func(i, j int) bool {
+		return results[i] < results[j]
+	})
+
+	return results, nil
+}
+
+// findPatternMatches finds all occurrences of the pattern in the data
+func findPatternMatches(data, pattern, mask []byte) []uint {
+	if len(data) < len(pattern) {
+		return nil
+	}
+
+	var matches []uint
+
+	for i := 0; i <= len(data)-len(pattern); i++ {
+		matched := true
+		for j := 0; j < len(pattern); j++ {
+			if mask[j] == 0 {
+				continue
+			}
+			if (data[i+j] & mask[j]) != (pattern[j] & mask[j]) {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			matches = append(matches, uint(i))
+		}
+	}
+	return matches
 }
 
 func (p *ProcessDump) ScanParallel(aob process.AOB, maxdop uint) ([]process.ProcessMemoryAddress, error) {

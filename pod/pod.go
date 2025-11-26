@@ -15,6 +15,13 @@ func SizeOf[T any]() process.ProcessMemorySize {
 }
 
 func ReadT[T any](proc process.Process, addr process.ProcessMemoryAddress) (T, error) {
+	var t T
+	if hasPointers[T]() {
+		// Use reflection-based reader for structs with pointers
+		err := ReadStruct(proc, addr, &t)
+		return t, err
+	}
+
 	size := SizeOf[T]()
 	if size == 0 {
 		return *new(T), errors.New("ReadT: size of T is zero")

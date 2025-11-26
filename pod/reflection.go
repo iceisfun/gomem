@@ -59,6 +59,10 @@ func ReadStruct(proc process.Process, addr process.ProcessMemoryAddress, v inter
 
 		fieldData := data[offset : offset+fieldSize]
 
+		if !field.CanSet() {
+			continue
+		}
+
 		if field.Kind() == reflect.Ptr {
 			// It's a pointer. The data in memory is the address (uint64 on 64-bit).
 			// We read the address.
