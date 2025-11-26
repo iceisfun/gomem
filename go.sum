@@ -1,0 +1,4 @@
+github.com/Moonlight-Companies/gologger v0.0.0-20250405013744-bfa1966699a2 h1:V+MTL94BNI5cfTDTK2BrCiba4k8p1qdgXIZZkg0DCa4=
+github.com/Moonlight-Companies/gologger v0.0.0-20250405013744-bfa1966699a2/go.mod h1:jNRASSd/W26iSJCCxI78tXpszF9wJixD4vq2bX4e6E4=
+golang.org/x/sys v0.28.0 h1:Fksou7UEQUWlKvIdsqzJmUmCX3cZuD2+P3XyyzwMhlA=
+golang.org/x/sys v0.28.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
